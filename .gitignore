@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.pyo
+*.pyd
+*.swp
+*.bak
+*.mp3:Zone.Identifier
