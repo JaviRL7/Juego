@@ -1,5 +1,5 @@
 import pgzrun
-from level import build_level, draw_level, blocks, get_flag, coins, lava_zones
+from level import load_level, draw_level, blocks, get_flag, coins, lava_zones, get_level_number
 from player import Player
 import pygame
 
@@ -28,7 +28,10 @@ def draw():
     elif death_screen:
         draw_death_screen()
     elif game_active:
-        screen.fill((135, 206, 235))  # Cielo celeste
+        if get_level_number() == 1:
+            screen.fill((135, 206, 235))  # Cielo celeste
+        else:
+            screen.fill((252, 186, 3))  # Atardecer / anochecer
         draw_level(screen, camera_x, coin_frame)
         player.draw(camera_x)
         draw_hud()
@@ -43,15 +46,16 @@ def draw_menu():
     screen.draw.text("LinkedIn: javier-rodriguez-lopez-4795a8180", center=(WIDTH // 2, 390), fontsize=20, color="white")
 
 def draw_win_screen():
+    screen.fill((200, 255, 200))
     screen.draw.text("YOU WIN!", center=(WIDTH // 2, HEIGHT // 2 - 40), fontsize=60, color="green")
-    screen.draw.text("This victory would taste better with a new hire at your company.",
-                     center=(WIDTH // 2, HEIGHT // 2 + 20), fontsize=28, color="black")
+    screen.draw.text("This victory would feel better with a new hire in your team.", center=(WIDTH // 2, HEIGHT // 2 + 20), fontsize=28, color="black")
+    screen.draw.text("Why not celebrate by hiring Javier Rodriguez?", center=(WIDTH // 2, HEIGHT // 2 + 60), fontsize=28, color="black")
     draw_play_again_button()
 
 def draw_death_screen():
+    screen.fill((255, 200, 200))
     screen.draw.text("YOU DIED", center=(WIDTH // 2, HEIGHT // 2 - 40), fontsize=60, color="red")
-    screen.draw.text("You are now legally obligated to hire Javier Rodriguez.",
-                     center=(WIDTH // 2, HEIGHT // 2 + 20), fontsize=26, color="black")
+    screen.draw.text("You're now forced to hire Javier Rodriguez.", center=(WIDTH // 2, HEIGHT // 2 + 20), fontsize=28, color="black")
     draw_retry_button()
 
 def draw_retry_button():
@@ -67,13 +71,14 @@ def draw_play_again_button():
 def draw_hud():
     global coin_count
     hud_str = str(coin_count)
+    screen.draw.text(f"LEVEL {get_level_number()}", (10, 10), fontsize=30, color="black")
     screen.draw.text("Hire me!", (WIDTH // 2 - 50, 10), fontsize=24, color="black")
     for i, digit in enumerate(hud_str):
         digit_actor = Actor(f"hud_character_{digit}", (150 + i * 20, 60))
         digit_actor.draw()
 
 def update():
-    global camera_x, win_screen, coin_count, death_screen, coin_frame, coin_animation_timer
+    global camera_x, win_screen, coin_count, death_screen, coin_frame, coin_animation_timer, player
 
     if game_active:
         player.update(blocks, keyboard)
@@ -86,22 +91,32 @@ def update():
 
         for lava in lava_zones:
             if player.actor.colliderect(lava):
-                music.stop()
+                try:
+                    music.stop()
+                except:
+                    pass
                 death_screen = True
 
         flag = get_flag()
         if flag and player.actor.colliderect(flag):
-            music.stop()
-            win_screen = True
+            try:
+                music.stop()
+            except:
+                pass
+            if get_level_number() == 1:
+                load_level(2)
+                player = Player((100, HEIGHT - 200))
+            else:
+                win_screen = True
 
         coin_animation_timer += 1
         if coin_animation_timer % 20 == 0:
             coin_frame = (coin_frame + 1) % len(coin_images)
 
 def on_mouse_down(pos):
-    global menu_active, game_active, coin_count, death_screen, win_screen
+    global menu_active, game_active, coin_count, death_screen, win_screen, player
     if menu_active:
-        build_level()
+        load_level(1)
         menu_active = False
         game_active = True
         coin_count = 0
@@ -116,7 +131,7 @@ def on_mouse_down(pos):
 
 def reset_game():
     global game_active, win_screen, death_screen, player
-    build_level()
+    load_level(1)
     player = Player((100, HEIGHT - 200))
     win_screen = False
     death_screen = False
